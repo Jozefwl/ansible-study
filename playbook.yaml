@@ -1,0 +1,25 @@
+- name: Webserver status
+  hosts: webserver
+  tasks:
+    - name: Gather services
+      ansible.builtin.service_facts:
+      register: services
+    
+    - name: Start service if it is stopped
+      when: services.ansible_facts.services['nginx.service'].state == "stopped"
+      command: systemctl start nginx
+
+    - name: Check webserver latency
+      uri:
+        url: "{{ url }}"
+        method: GET
+        return_content: no
+        follow_redirects: all
+      register: latency_result
+
+    - debug:
+        var: latency_result
+
+    - name: Display latency in milliseconds
+      debug:
+        msg: "Latency to {{ url }}: {{ latency_result.elapsed * 1000 }} ms"
