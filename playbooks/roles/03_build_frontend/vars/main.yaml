@@ -1,0 +1,4 @@
+workdir: "{{ playbook_dir }}/../workdir"
+frontend: "{{ workdir }}/frontend"
+backend: "{{ workdir }}/backend"
+app_version: 1.0

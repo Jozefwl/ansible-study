@@ -13,3 +13,14 @@
     update_cache: yes
   become: true
   when: npm_check.rc != 0
+
+- name: Check for docker
+  ansible.builtin.command: which docker
+  register: docker_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Throw error when docker isn't present
+  ansible.builtin.fail:
+    msg: "Docker is required, install it: https://docs.docker.com/engine/install/"
+  when: docker_check.rc != 0

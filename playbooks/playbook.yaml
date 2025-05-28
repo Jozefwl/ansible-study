@@ -19,11 +19,11 @@
   roles:
     - role: 03_build_frontend
       tags: [build, frontend]
-    - role: 04_make_container
-      tags: [container, docker]
+#     - role: 04_make_container
+#       tags: [container, docker]
 
-- name: Upload exported contianer to server
-  hosts: localhost
-  become: true
-  roles:
-    - role: 05
+# - name: Upload exported contianer to server
+#   hosts: localhost
+#   become: true
+#   roles:
+#     - role: 05

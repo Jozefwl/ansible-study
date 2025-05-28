@@ -1,0 +1,5 @@
+- name: Build next.js frontend docker container
+  ansible.builtin.shell:
+    cmd: docker build -t website-blog:v"{{ app_version }}"
+    chdir: "{{ frontend }}"
+
