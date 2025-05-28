@@ -13,6 +13,12 @@
     mode: '0755'
   become: true
 
+- name: Remove old docker image from server
+  ansible.builtin.shell:
+    cmd: docker rmi website-blog
+  ignore_errors: true
+  become: true
+
 - name: Load docker image into docker
   ansible.builtin.shell:
     cmd: "docker load -i {{ destination }}"

@@ -21,6 +21,7 @@
     state: present
 
 # TODO: put this into a file
+# TODO: more roles for switching deployment strategies
 - name: Make kubernetes deployment
   kubernetes.core.k8s:
     state: present

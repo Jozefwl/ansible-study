@@ -1,3 +1,9 @@
+- name: Remove existing docker container
+  ansible.builtin.shell:
+    cmd: docker rmi website-blog
+  ignore_errors: true
+  become: true
+
 - name: Build next.js frontend docker container
   ansible.builtin.shell:
     cmd: docker build -t website-blog .
