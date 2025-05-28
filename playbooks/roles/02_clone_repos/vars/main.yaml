@@ -1,0 +1,3 @@
+workdir: "{{ playbook_dir }}/../workdir"
+frontend_repo: "https://github.com/Jozefwl/website-blog.git"
+backend_repo: "https://github.com/Jozefwl/backend-metrics.git"

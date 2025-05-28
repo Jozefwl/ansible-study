@@ -1,0 +1,26 @@
+- name: Make sure working directory exists
+  ansible.builtin.file:
+    path: "{{ workdir }}"
+    state: directory
+
+- name: Clone the frontend repository
+  ansible.builtin.git:
+    repo: "{{ frontend_repo }}"
+    dest: "{{ workdir }}/frontend"
+
+- name: Install frontend dependencies
+  ansible.builtin.shell:
+    cmd: npm install
+    chdir: "{{ workdir }}/frontend"
+    creates: "{{ workdir }}/frontend/node_modules"
+
+- name: Clone backend repository
+  ansible.builtin.git:
+    repo: "{{ backend_repo }}"
+    dest: "{{ workdir }}/backend"
+
+- name: Install backend dependencies
+  ansible.builtin.shell:
+    cmd: npm install
+    chdir: "{{ workdir }}/backend"
+    creates: "{{ workdir }}/backend/node_modules"

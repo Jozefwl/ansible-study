@@ -1,5 +1,29 @@
 ---
-- name: Clone repos and install dependencies
+- name: Check prerequisites
+  hosts: localhost
+  become: true
+  roles:
+    - role: 01_prerequisites
+      tags: always
+  
+- name: Clone repositories and install dependencies
+  hosts: localhost
   become: false
   roles:
-    - 01_clone_repos
+    - role: 02_clone_repos
+      tags: [repositories, setup]
+
+- name: Build frontend application and make docker container
+  hosts: localhost
+  become: true
+  roles:
+    - role: 03_build_frontend
+      tags: [build, frontend]
+    - role: 04_make_container
+      tags: [container, docker]
+
+- name: Upload exported contianer to server
+  hosts: localhost
+  become: true
+  roles:
+    - role: 05
