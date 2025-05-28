@@ -8,3 +8,8 @@ I want to automate this:
 - Build frontend on local, make it a docker image, then turn it into kubernetes deployment and service
 - Run backend on k3s machine itself as it needs to track cpu, mem usage
 - Use nginx to expose the ports
+
+
+## Run playbook:
+cd ansible/playbooks
+ansible-playbook playbook.yaml

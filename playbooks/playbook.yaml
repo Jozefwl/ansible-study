@@ -1,0 +1,5 @@
+---
+- name: Clone repos and install dependencies
+  become: false
+  roles:
+    - 01_clone_repos
