@@ -1,5 +1,27 @@
 - name: Build next.js frontend docker container
   ansible.builtin.shell:
-    cmd: docker build -t website-blog:v"{{ app_version }}"
+    cmd: docker build -t website-blog .
     chdir: "{{ frontend }}"
+  become: true
 
+- name: Create image directory if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ workdir }}/image"
+    state: directory
+  become: true
+
+- name: Export Docker image to file
+  ansible.builtin.shell:
+    cmd: docker save -o {{ workdir }}/image/website-blog.tar website-blog
+  async: 10000
+  poll: 0
+  register: docker_sleeper
+  become: true
+
+- name: Wait until Docker image is built
+  async_status:
+    jid: "{{ docker_sleeper.ansible_job_id }}"
+  register: job_result
+  until: job_result.finished
+  retries: 30
+  delay: 5

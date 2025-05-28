@@ -1,0 +1,19 @@
+- name: Make sure target directory exists on server
+  ansible.builtin.file:
+    path: "{{ destinationPath }}"
+    state: directory
+  become: true
+
+- name: Copy exported docker image to server
+  ansible.builtin.copy:
+    src: "{{ source }}"
+    dest: "{{ destination }}"
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+
+- name: Load docker image into docker
+  ansible.builtin.shell:
+    cmd: "docker load -i {{ destination }}"
+  become: true

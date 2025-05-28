@@ -12,4 +12,5 @@ I want to automate this:
 
 ## Run playbook:
 cd ansible/playbooks
-ansible-playbook playbook.yaml
+sudo ansible-playbook playbook.yaml 
+sudo ansible-playbook playbook.yaml --tags k8s

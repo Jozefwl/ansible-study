@@ -1,0 +1,87 @@
+- name: Check if kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/k3s/k3s.yaml
+  register: kubeconfig_check
+
+- name: Throw error if kubeconfig doesn't exist
+  ansible.builtin.fail:
+    msg: "Kubeconfig not found at /etc/rancher/k3s/k3s.yaml"
+  when: not kubeconfig_check.stat.exists
+
+- name: Set kubeconfig environment variable
+  ansible.builtin.set_fact:
+    rancher_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+
+- name: Create namespace for deployment
+  kubernetes.core.k8s:
+    name: apps
+    api_version: v1
+    kind: Namespace
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    state: present
+
+# TODO: put this into a file
+- name: Make kubernetes deployment
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: website-app
+        namespace: apps  
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: website-app
+        template:
+          metadata:
+            labels:
+              app: website-app
+          spec:
+            containers:
+              - name: website-app
+                image: website-blog  
+                imagePullPolicy: IfNotPresent
+                ports:
+                  - containerPort: 3000
+                resources:
+                  requests:
+                    memory: "768Mi"
+                    cpu: "500m"
+                  limits:
+                    memory: "768Mi"
+                    cpu: "1"
+  register: deployment_result
+
+- name: Display deployment results
+  debug:
+    var: deployment_result
+
+# TODO: put this into a file
+- name: Make service for deployment
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: website-service
+        namespace: apps  # deployment namespace
+      spec:
+        type: NodePort
+        selector:
+          app: website-app
+        ports:
+          - protocol: TCP
+            port: 3000         # Port exposed by the service
+            targetPort: 3000   # Port on the pod/container
+            nodePort: 31000    # Port on the node (must be between 30000-32767)
+  register: service_result
+
+- name: Display service results
+  debug:
+    var: service_result

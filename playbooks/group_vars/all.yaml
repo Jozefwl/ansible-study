@@ -1,0 +1,18 @@
+# directories local
+workdir: "{{ playbook_dir }}/../workdir"
+frontend: "{{ workdir }}/frontend"
+backend: "{{ workdir }}/backend"
+imagedir: "{{ workdir }}/image"
+source: "{{ imagedir }}/website-blog.tar"
+
+# directories external
+destinationPath: "/etc/website/"
+destination: "{{ destinationPath }}{{ tarName }}"
+
+# repositories 
+frontend_repo: "https://github.com/Jozefwl/website-blog.git"
+backend_repo: "https://github.com/Jozefwl/backend-metrics.git"
+
+# filecopy tomfoolery
+tarName: "website-blog.tar"
+

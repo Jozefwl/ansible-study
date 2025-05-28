@@ -19,11 +19,24 @@
   roles:
     - role: 03_build_frontend
       tags: [build, frontend]
-#     - role: 04_make_container
-#       tags: [container, docker]
 
-# - name: Upload exported contianer to server
-#   hosts: localhost
-#   become: true
-#   roles:
-#     - role: 05
+- name: Check server prerequisites
+  hosts: toughbook
+  become: true
+  roles: 
+    - role: 04_server_prerequisites
+      tags: always
+
+- name: Upload exported contianer to server
+  hosts: toughbook
+  become: true
+  roles:
+    - role: 05_upload_to_server
+      tags: [upload, server]
+
+- name: Make kubernetes deployment and service
+  hosts: toughbook
+  become: true
+  roles:
+    - role: 06_deployment_service
+      tags: [k8s]

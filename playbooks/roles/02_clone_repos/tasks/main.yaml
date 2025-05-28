@@ -26,25 +26,25 @@
     cmd: npm install
     chdir: "{{ workdir }}/frontend"
 
-- name: Check if backend repository exists
-  ansible.builtin.stat:
-    path: "{{ workdir }}/backend"
-  register: backend_exists
+# - name: Check if backend repository exists
+#   ansible.builtin.stat:
+#     path: "{{ workdir }}/backend"
+#   register: backend_exists
 
-- name: Pull latest BE commit
-  ansible.builtin.git:
-    repo: "{{ backend_repo }}"
-    dest: "{{ workdir }}/backend"
-    refspec: '+refs/pull/*:refs/heads/*'
-  when: backend_exists.stat.exists
+# - name: Pull latest BE commit
+#   ansible.builtin.git:
+#     repo: "{{ backend_repo }}"
+#     dest: "{{ workdir }}/backend"
+#     refspec: '+refs/pull/*:refs/heads/*'
+#   when: backend_exists.stat.exists
 
-- name: Clone backend repository
-  ansible.builtin.git:
-    repo: "{{ backend_repo }}"
-    dest: "{{ workdir }}/backend"
-  when: not backend_exists.stat.exists
+# - name: Clone backend repository
+#   ansible.builtin.git:
+#     repo: "{{ backend_repo }}"
+#     dest: "{{ workdir }}/backend"
+#   when: not backend_exists.stat.exists
 
-- name: Install backend dependencies
-  ansible.builtin.shell:
-    cmd: npm install
-    chdir: "{{ workdir }}/backend"
+# - name: Install backend dependencies
+#   ansible.builtin.shell:
+#     cmd: npm install
+#     chdir: "{{ workdir }}/backend"

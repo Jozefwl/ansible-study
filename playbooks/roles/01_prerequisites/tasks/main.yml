@@ -20,6 +20,7 @@
   ignore_errors: true
   changed_when: false
 
+# TODO: Automate docker install on localhost
 - name: Throw error when docker isn't present
   ansible.builtin.fail:
     msg: "Docker is required, install it: https://docs.docker.com/engine/install/"
