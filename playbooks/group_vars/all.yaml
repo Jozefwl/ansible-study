@@ -16,3 +16,6 @@ backend_repo: "https://github.com/Jozefwl/backend-metrics.git"
 # filecopy tomfoolery
 tarName: "website-blog.tar"
 
+# deployment
+deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate
+
