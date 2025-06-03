@@ -4,6 +4,12 @@
     state: directory
   become: true
 
+# Ansible doesnt support async copy of file, for that they'd need streaming of logs
+# It's issue 92 on ansible git open from 2018...
+- name: Inform user of long operation
+  debug:
+    msg: "Please be patient, this takes a while..."
+
 - name: Copy exported docker image to server
   ansible.builtin.copy:
     src: "{{ source }}"
@@ -13,13 +19,37 @@
     mode: '0755'
   become: true
 
-- name: Remove old docker image from server
+# - name: Remove old docker image from server
+#   ansible.builtin.shell:
+#     cmd: docker rmi website-blog
+#   ignore_errors: true
+#   become: true
+
+# - name: Load docker image into docker
+#   ansible.builtin.shell:
+#     cmd: "docker load -i {{ destination }}"
+#   become: true
+
+- name: Remove old containerd image from server
   ansible.builtin.shell:
-    cmd: docker rmi website-blog
+    cmd: "/var/lib/rancher/rke2/bin/ctr -n k8s.io images rm website-blog:latest"
   ignore_errors: true
   become: true
 
-- name: Load docker image into docker
+# TODO: Fix why it's not importing the image
+- name: Import docker image into containerd for RKE2
   ansible.builtin.shell:
-    cmd: "docker load -i {{ destination }}"
+    cmd: "/var/lib/rancher/rke2/bin/ctr -n k8s.io images import {{ destination }}"
+  become: true
+  async: 500
+  poll: 0
+  register: containerd_import_job
+
+- name: Check containerd import status
+  ansible.builtin.async_status:
+    jid: "{{ containerd_import_job.ansible_job_id }}"
+  register: containerd_import_result
+  until: containerd_import_result.finished
+  retries: 100
+  delay: 5
   become: true

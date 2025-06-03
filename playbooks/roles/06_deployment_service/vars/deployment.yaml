@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-app
+  namespace: apps  
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: website-app
+  template:
+    metadata:
+      labels:
+        app: website-app
+    spec:
+      containers:
+        - name: website-app
+          image: docker.io/library/website-blog:latest # fixed for rancher import through containerd
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              memory: "768Mi"
+              cpu: "500m"
+            limits:
+              memory: "768Mi"
+              cpu: "1"

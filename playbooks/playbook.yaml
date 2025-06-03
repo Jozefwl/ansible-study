@@ -40,3 +40,10 @@
   roles:
     - role: 06_deployment_service
       tags: [k8s]
+
+- name: Remove and roll back kubernetes deployment
+  hosts: "{{ TARGET_NODE }}"
+  become: true
+  roles:
+    - role: 07_rollback_deployment_service
+      tags: [rollback, delete, never]

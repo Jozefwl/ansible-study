@@ -1,0 +1,43 @@
+- name: Check if kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/rke2/rke2.yaml
+  register: kubeconfig_check
+
+- name: Throw error if kubeconfig doesn't exist
+  ansible.builtin.fail:
+    msg: "Kubeconfig not found at /etc/rancher/rke2/rke2.yaml"
+  when: not kubeconfig_check.stat.exists
+
+- name: Set kubeconfig environment variable
+  ansible.builtin.set_fact:
+    rancher_kubeconfig: "/etc/rancher/rke2/rke2.yaml"
+
+- name: Load deployment yaml from 06_deployment_service
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/roles/06_deployment_service/vars/deployment.yaml"
+    name: deployment_config
+
+- name: Load service yaml from 06_deployment_service
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/roles/06_deployment_service/vars/service.yaml"
+    name: service_config
+
+- name: Remove kubernetes service
+  kubernetes.core.k8s:
+    state: absent
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ service_config }}"
+  register: service_removal_result
+
+- name: Remove kubernetes deployment
+  kubernetes.core.k8s:
+    state: absent
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ deployment_config }}"
+  register: deployment_removal_result
+
+- name: Display removal results
+  debug:
+    msg: 
+      - "Service removal: {{ service_removal_result.changed }}"
+      - "Deployment removal: {{ deployment_removal_result.changed }}"
