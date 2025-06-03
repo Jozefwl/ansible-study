@@ -12,5 +12,7 @@ I want to automate this:
 
 ## Run playbook:
 cd ansible/playbooks
+
 sudo ansible-playbook playbook.yaml -e TARGET_NODE=debian
+
 sudo ansible-playbook playbook.yaml -e TARGET_NODE=local_rancher --tags k8s
