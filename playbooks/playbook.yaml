@@ -21,21 +21,21 @@
       tags: [build, frontend]
 
 - name: Check server prerequisites
-  hosts: toughbook
+  hosts: "{{ TARGET_NODE }}"
   become: true
   roles: 
     - role: 04_server_prerequisites
       tags: always
 
 - name: Upload exported contianer to server
-  hosts: toughbook
+  hosts: "{{ TARGET_NODE }}"
   become: true
   roles:
     - role: 05_upload_to_server
       tags: [upload, server]
 
 - name: Make kubernetes deployment and service
-  hosts: toughbook
+  hosts: "{{ TARGET_NODE }}"
   become: true
   roles:
     - role: 06_deployment_service

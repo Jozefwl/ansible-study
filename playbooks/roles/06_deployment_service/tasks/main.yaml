@@ -1,16 +1,16 @@
 - name: Check if kubeconfig exists
   ansible.builtin.stat:
-    path: /etc/rancher/k3s/k3s.yaml
+    path: /etc/rancher/rke2/rke2.yaml
   register: kubeconfig_check
 
 - name: Throw error if kubeconfig doesn't exist
   ansible.builtin.fail:
-    msg: "Kubeconfig not found at /etc/rancher/k3s/k3s.yaml"
+    msg: "Kubeconfig not found at /etc/rancher/rke2/rke2.yaml"
   when: not kubeconfig_check.stat.exists
 
 - name: Set kubeconfig environment variable
   ansible.builtin.set_fact:
-    rancher_kubeconfig: "/etc/rancher/k3s/k3s.yaml"
+    rancher_kubeconfig: "/etc/rancher/rke2/rke2.yaml"
 
 - name: Create namespace for deployment
   kubernetes.core.k8s:
