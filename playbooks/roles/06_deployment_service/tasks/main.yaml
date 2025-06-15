@@ -14,7 +14,7 @@
 
 - name: Create namespace for deployment
   kubernetes.core.k8s:
-    name: apps
+    name: "{{ namespace }}"
     api_version: v1
     kind: Namespace
     kubeconfig: "{{ rancher_kubeconfig }}"
