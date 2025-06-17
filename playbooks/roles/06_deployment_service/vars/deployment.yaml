@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: website-app
-          image: docker.io/library/website-blog:latest # fixed for rancher import through containerd
-          imagePullPolicy: Never
+          image: "{{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:latest" # custom registry
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
           resources:

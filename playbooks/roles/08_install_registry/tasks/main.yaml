@@ -1,0 +1,100 @@
+- name: Check if kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/rke2/rke2.yaml
+  register: kubeconfig_check
+
+- name: Throw error if kubeconfig doesn't exist
+  ansible.builtin.fail:
+    msg: "Kubeconfig not found at /etc/rancher/rke2/rke2.yaml"
+  when: not kubeconfig_check.stat.exists
+
+- name: Set kubeconfig environment variable
+  ansible.builtin.set_fact:
+    rancher_kubeconfig: "/etc/rancher/rke2/rke2.yaml"
+
+- name: Create namespace for deployment
+  kubernetes.core.k8s:
+    name: "{{ registry_namespace }}"
+    api_version: v1
+    kind: Namespace
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    state: present
+
+- name: Load PVC config
+  ansible.builtin.include_vars:
+    file: pvc.yaml
+    name: pvc_config
+
+- name: Make persistent volume for docker-registry
+  kubernetes.core.k8s:
+    state: present 
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ pvc_config }}"
+
+- name: Load deployment config
+  ansible.builtin.include_vars:
+    file: deployment.yaml
+    name: deployment_config
+
+# TODO: more roles for switching deployment strategies
+- name: Make kubernetes deployment
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ deployment_config }}"
+  register: deployment_result
+
+# - name: Display deployment results
+#   debug:
+#     var: deployment_result
+
+- name: Load service config
+  ansible.builtin.include_vars:
+    file: service.yaml
+    name: service_config
+
+- name: Make service for deployment
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ service_config }}"
+      
+  register: service_result
+
+# - name: Display service results
+#   debug:
+#     var: service_result
+
+- name: Check if RKE2 registries.yaml exists
+  ansible.builtin.stat:
+    path: /etc/rancher/rke2/registries.yaml
+  register: registries_file
+
+- name: Create RKE2 registries.yaml if it doesn't exist
+  ansible.builtin.copy:
+    content: |
+      mirrors:
+        "{{ hostvars[TARGET_NODE]['ansible_host'] }}:30999":
+          endpoint:
+            - "http://{{ hostvars[TARGET_NODE]['ansible_host'] }}:30999"
+    dest: /etc/rancher/rke2/registries.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  when: not registries_file.stat.exists
+
+- name: Check current registries.yaml content
+  ansible.builtin.slurp:
+    src: /etc/rancher/rke2/registries.yaml
+  register: registries_content
+  become: true
+
+- name: Display current registries.yaml content
+  debug:
+    msg: "{{ registries_content.content | b64decode }}"
+
+- name: Verify registries.yaml contains required registry
+  ansible.builtin.fail:
+    msg: "registries.yaml does not contain the required registry {{ hostvars[TARGET_NODE]['ansible_host'] }}:30999"
+  when: "hostvars[TARGET_NODE]['ansible_host'] + ':30999' not in registries_content.content | b64decode"

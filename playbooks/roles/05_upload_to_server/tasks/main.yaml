@@ -39,13 +39,13 @@
 # TODO: Fix why it's not importing the image
 - name: Import docker image into containerd for RKE2
   ansible.builtin.shell:
-    cmd: "/var/lib/rancher/rke2/bin/ctr -n k8s.io images import {{ destination }}"
+    cmd: "/var/lib/rancher/rke2/bin/ctr -n {{ namespace }} images import {{ destination }}"
   become: true
   async: 500
   poll: 0
   register: containerd_import_job
 
-- name: Check containerd import status
+- name: Check if container is imported
   ansible.builtin.async_status:
     jid: "{{ containerd_import_job.ansible_job_id }}"
   register: containerd_import_result

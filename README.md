@@ -2,19 +2,28 @@
 This repository is used for learning ansible for my bachelor's degree.
 
 
-## first automation task
-I want to automate this:
-- Automate getting of cluster kubeconfig from rancher installation
+## TODO
+- Automate rke2 deployment on new machine and adding to rancher GUI
+- Make helm chart for easier deployments and rollbacks
+- Add deployment strategies
+- Consolidate tasks so that user doesn't have to call 4 cmds
+- Automate making StorageClass for new cluster and PV
+- Fix bad naming
+
+## Finished
+- Expose ports
 - Add custom registry
-- Get my frontend and backend repo (website-blog and backend-metrics)
-- Build frontend on local, make it a docker image, then turn it into kubernetes deployment and service
-- Run backend on k3s machine itself as it needs to track cpu, mem usage
-- Use nginx to expose the ports
+- Get frontend repo and build docker image
+- Deploy docker image on kubernetes
 
 
 ## Run playbook:
 cd playbooks
 
-sudo ansible-playbook playbook.yaml -e TARGET_NODE=debian
+sudo ansible-playbook playbook.yaml -e TARGET_NODE=local
 
-sudo ansible-playbook playbook.yaml -e TARGET_NODE=local_rancher --tags k8s
+sudo ansible-playbook playbook.yaml -e TARGET_NODE=local --tags registry
+
+## Documentation
+Use --tags registry for installation of registry
+Use --tags rollback for removal of deployment

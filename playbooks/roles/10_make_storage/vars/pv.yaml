@@ -1,0 +1,17 @@
+# sudo mkdir -p /opt/registry-data
+# sudo chown -R 1000:1000 /opt/registry-data   # 1000:1000 matches the registry user/group by default
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: registry-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: opt-storage
+  hostPath:
+    path: /opt/registry-data
+    type: DirectoryOrCreate

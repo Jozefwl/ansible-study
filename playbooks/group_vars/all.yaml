@@ -16,6 +16,16 @@ backend_repo: "https://github.com/Jozefwl/backend-metrics.git"
 # filecopy tomfoolery
 tarName: "website-blog.tar"
 
+# registry
+registry_namespace: registry
+registry_host: null
+registry_port: 5000
+nodeport_registry: 30999
+
 # deployment
-deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate
+deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate, ramped
+namespace: apps
+
+
+
 

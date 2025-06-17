@@ -13,13 +13,6 @@
     - role: 02_clone_repos
       tags: [repositories, setup]
 
-- name: Build frontend application and make docker container
-  hosts: localhost
-  become: true
-  roles:
-    - role: 03_build_frontend
-      tags: [build, frontend]
-
 - name: Check server prerequisites
   hosts: "{{ TARGET_NODE }}"
   become: true
@@ -27,12 +20,26 @@
     - role: 04_server_prerequisites
       tags: always
 
-- name: Upload exported contianer to server
-  hosts: "{{ TARGET_NODE }}"
+- name: Build frontend application and make docker container
+  hosts: localhost
   become: true
   roles:
-    - role: 05_upload_to_server
-      tags: [upload, server]
+    - role: 03_build_frontend
+      tags: [build, frontend]
+
+# - name: Upload exported contianer to server
+#   hosts: "{{ TARGET_NODE }}"
+#   become: true
+#   roles:
+#     - role: 05_upload_to_server
+#       tags: [upload, server]
+
+- name: Retag image and push to registry
+  hosts: localhost
+  become: true
+  roles:
+    - role: 09_push_to_registry
+      tags: [push]
 
 - name: Make kubernetes deployment and service
   hosts: "{{ TARGET_NODE }}"
@@ -41,9 +48,29 @@
     - role: 06_deployment_service
       tags: [k8s]
 
+- hosts: "localhost"
+  tasks:
+    - assert:
+        that:
+          - TARGET_NODE is defined
+    - pause:
+        prompt: |
+          -------------------------------
+          You are going to DELETE deployment on the "{{ TARGET_NODE }}" node.
+          -------------------------------
+        seconds: 300
+  tags: [delete, remove, never]
+
 - name: Remove and roll back kubernetes deployment
   hosts: "{{ TARGET_NODE }}"
   become: true
   roles:
-    - role: 07_rollback_deployment_service
-      tags: [rollback, delete, never]
+    - role: 07_remove_deployment_service
+      tags: [delete, remove, never]
+
+- name: Run registry install task
+  hosts: "{{ TARGET_NODE }}"
+  become: true
+  roles:
+    - role: 08_install_registry
+      tags: [registry, never]

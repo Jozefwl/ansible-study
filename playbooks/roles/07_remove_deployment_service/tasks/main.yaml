@@ -41,3 +41,13 @@
     msg: 
       - "Service removal: {{ service_removal_result.changed }}"
       - "Deployment removal: {{ deployment_removal_result.changed }}"
+
+- name: Verify service was removed
+  ansible.builtin.fail:
+    msg: "Service removal failed - no changes were made. Service may not exist or removal failed."
+  when: not service_removal_result.changed
+
+- name: Verify deployment was removed
+  ansible.builtin.fail:
+    msg: "Deployment removal failed - no changes were made. Deployment may not exist or removal failed."
+  when: not deployment_removal_result.changed
