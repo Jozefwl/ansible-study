@@ -24,6 +24,13 @@ spec:
           ports:
             - name: http
               containerPort: "{{ registry_port }}"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           volumeMounts:
             - name: image-store
               mountPath: "/var/lib/registry"
