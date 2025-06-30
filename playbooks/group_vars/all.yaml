@@ -1,7 +1,7 @@
 # directories local
 workdir: "{{ playbook_dir }}/../workdir"
 frontend: "{{ workdir }}/frontend"
-backend: "{{ workdir }}/backend"
+backend: "{{ workdir }}/frontend/server"
 imagedir: "{{ workdir }}/image"
 source: "{{ imagedir }}/website-blog.tar"
 
@@ -25,6 +25,7 @@ nodeport_registry: 30999
 # deployment
 deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate, ramped
 namespace: apps
+namespace_cdn: cdn
 
 
 

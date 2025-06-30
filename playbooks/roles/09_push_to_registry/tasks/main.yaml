@@ -9,14 +9,25 @@
   debug:
     msg: "Registry is {{ 'running' if registry_check.status == 200 else 'not accessible' }}"
 
-- name: Tag image for registry
+- name: Tag frontend image for registry
   ansible.builtin.shell:
     cmd: "docker tag website-blog:latest {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:latest"
   become: true
 
-- name: Push image to registry
+- name: Tag backend image for registry
+  ansible.builtin.shell:
+    cmd: "docker tag metrics-api:latest {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:latest"
+  become: true
+
+- name: Push frontend image to registry
   ansible.builtin.shell:
     cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:latest"
+  become: true
+  register: push_result
+
+- name: Push backend image to registry
+  ansible.builtin.shell:
+    cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:latest"
   become: true
   register: push_result
 

@@ -1,0 +1,26 @@
+- name: Check if kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/rke2/rke2.yaml
+  register: kubeconfig_check
+
+- name: Throw error if kubeconfig doesn't exist
+  ansible.builtin.fail:
+    msg: "Kubeconfig not found at /etc/rancher/rke2/rke2.yaml"
+  when: not kubeconfig_check.stat.exists
+
+- name: Set kubeconfig environment variable
+  ansible.builtin.set_fact:
+    rancher_kubeconfig: "/etc/rancher/rke2/rke2.yaml"
+
+- name: Load Ingress config
+  ansible.builtin.include_vars:
+    file: nginx-ingress.yaml
+    name: nginx-ingress
+
+# TODO: more roles for switching deployment strategies
+- name: Apply ingress for waldhauser.sk and related sites
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition: "{{ nginx-ingress }}"
+  register: nginx_result

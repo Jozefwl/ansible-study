@@ -20,12 +20,12 @@
     - role: 04_server_prerequisites
       tags: always
 
-- name: Build frontend application and make docker container
+- name: Build FE and BE and make docker container
   hosts: localhost
   become: true
   roles:
-    - role: 03_build_frontend
-      tags: [build, frontend]
+    - role: 03_build_server
+      tags: [build, server]
 
 # - name: Upload exported contianer to server
 #   hosts: "{{ TARGET_NODE }}"
@@ -74,3 +74,17 @@
   roles:
     - role: 08_install_registry
       tags: [registry, never]
+
+- name: Make ingress
+  hosts: "{{ TARGET_NODE }}"
+  become: true
+  roles:
+    - role: 11_setup_ingress
+      tags: [ingress]
+
+- name: Setup CDN
+  hosts: "{{ TARGET_NODE }}"
+  become: true
+  roles:
+    - role: 12_setup_cdn
+      tags: [cdn]

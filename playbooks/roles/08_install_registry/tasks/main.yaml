@@ -74,9 +74,9 @@
   ansible.builtin.copy:
     content: |
       mirrors:
-        "{{ hostvars[TARGET_NODE]['ansible_host'] }}:30999":
+        "{{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}":
           endpoint:
-            - "http://{{ hostvars[TARGET_NODE]['ansible_host'] }}:30999"
+            - "http://{{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}"
     dest: /etc/rancher/rke2/registries.yaml
     owner: root
     group: root
@@ -96,5 +96,5 @@
 
 - name: Verify registries.yaml contains required registry
   ansible.builtin.fail:
-    msg: "registries.yaml does not contain the required registry {{ hostvars[TARGET_NODE]['ansible_host'] }}:30999"
-  when: "hostvars[TARGET_NODE]['ansible_host'] + ':30999' not in registries_content.content | b64decode"
+    msg: "registries.yaml does not contain the required registry {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}"
+  when: "hostvars[TARGET_NODE]['ansible_host'] + ':' + nodeport_registry|string not in registries_content.content | b64decode"
