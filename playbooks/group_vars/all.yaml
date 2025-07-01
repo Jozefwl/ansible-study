@@ -23,12 +23,23 @@ registry_port: 5000
 nodeport_registry: 30999
 
 # deployment
-deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate, ramped
 namespace: apps
 namespace_cdn: cdn
-version_frontend: 0.1.1.1
-version_backend: 0.1.1.3
+version_frontend: 0.1.1.2
+version_backend: 0.1.1.4
+frontend_app_name: "website-app"
+backend_app_name: "metrics-api"
+frontend_service_name: "website-service"
+backend_service_name: "metrics-service"
 
+# deployment strategies
+deployment_strategy: "rolling"  # rolling is default, blue-green, canary, shadow, recreate, ramped
+canary_percentage: 10
+ab_test_percentage: 20
+canary_user_ips: []
+shadow_replicas: 1
+replicas: 3
+app_host: "{{ hostvars[TARGET_NODE]['ansible_host'] }}"
 
 
 

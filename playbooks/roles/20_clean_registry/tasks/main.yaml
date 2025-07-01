@@ -1,0 +1,262 @@
+---
+# Clean Registry - Remove all images from Docker registry
+
+- name: Display registry cleanup warning
+  ansible.builtin.debug:
+    msg: |
+      REGISTRY CLEANUP WARNING
+      
+      This will remove ALL images from the registry:
+      Registry: {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}
+      Namespace: {{ registry_namespace }}
+      
+      This action is IRREVERSIBLE!
+
+- name: Confirm registry cleanup
+  ansible.builtin.pause:
+    prompt: |
+      
+      CONFIRM REGISTRY CLEANUP
+      
+      Are you sure you want to delete ALL images from the registry?
+      This will remove all stored container images permanently.
+      
+      Type 'yes' to confirm, anything else to cancel
+  register: cleanup_confirmation
+
+- name: Validate confirmation
+  ansible.builtin.fail:
+    msg: "Registry cleanup cancelled by user"
+  when: cleanup_confirmation.user_input != 'yes'
+
+- name: Check if kubeconfig exists
+  ansible.builtin.stat:
+    path: /etc/rancher/rke2/rke2.yaml
+  register: kubeconfig_check
+
+- name: Throw error if kubeconfig doesn't exist
+  ansible.builtin.fail:
+    msg: "Kubeconfig not found at /etc/rancher/rke2/rke2.yaml"
+  when: not kubeconfig_check.stat.exists
+
+- name: Set kubeconfig environment variable
+  ansible.builtin.set_fact:
+    rancher_kubeconfig: "/etc/rancher/rke2/rke2.yaml"
+
+- name: Get registry pod information
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ registry_namespace }}"
+    label_selectors:
+      - "app=docker-registry"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+  register: registry_pods
+
+- name: Fail if no registry pods found
+  ansible.builtin.fail:
+    msg: "No registry pods found in namespace {{ registry_namespace }}"
+  when: registry_pods.resources | length == 0
+
+- name: Set registry pod name
+  ansible.builtin.set_fact:
+    registry_pod_name: "{{ registry_pods.resources[0].metadata.name }}"
+
+- name: List all repositories in registry
+  kubernetes.core.k8s_exec:
+    namespace: "{{ registry_namespace }}"
+    pod: "{{ registry_pod_name }}"
+    command: |
+      find /var/lib/registry/docker/registry/v2/repositories -maxdepth 1 -type d -exec basename {} \;
+    kubeconfig: "{{ rancher_kubeconfig }}"
+  register: registry_repos
+  ignore_errors: true
+
+- name: Display repositories to be deleted
+  ansible.builtin.debug:
+    msg: |
+      Repositories found in registry:
+      {{ registry_repos.stdout_lines | default([]) | join('\n') }}
+  when: registry_repos.stdout_lines is defined and registry_repos.stdout_lines | length > 0
+
+- name: Stop registry container
+  kubernetes.core.k8s_scale:
+    api_version: apps/v1
+    kind: Deployment
+    name: docker-registry
+    namespace: "{{ registry_namespace }}"
+    replicas: 0
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    wait: true
+    wait_timeout: 120
+
+- name: Wait for registry pod to terminate
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ registry_namespace }}"
+    label_selectors:
+      - "app=docker-registry"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    wait: true
+    wait_condition:
+      type: "PodReadyCondition"
+      status: "False"
+    wait_timeout: 120
+  ignore_errors: true
+
+- name: Create cleanup job
+  kubernetes.core.k8s:
+    state: present
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    definition:
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: registry-cleanup-job
+        namespace: "{{ registry_namespace }}"
+      spec:
+        template:
+          spec:
+            restartPolicy: Never
+            containers:
+            - name: cleanup
+              image: alpine:latest
+              command: 
+                - /bin/sh
+                - -c
+                - |
+                  echo "Starting registry cleanup..."
+                  if [ -d "/var/lib/registry/docker" ]; then
+                    echo "Found registry data directory"
+                    echo "Registry size before cleanup:"
+                    du -sh /var/lib/registry/docker || echo "Could not calculate size"
+                    
+                    echo "Removing all registry data..."
+                    rm -rf /var/lib/registry/docker/registry/v2/repositories/*
+                    rm -rf /var/lib/registry/docker/registry/v2/blobs/*
+                    
+                    echo "Registry size after cleanup:"
+                    du -sh /var/lib/registry/docker || echo "Could not calculate size"
+                    echo "Registry cleanup completed successfully!"
+                  else
+                    echo "Registry data directory not found"
+                    exit 1
+                  fi
+              volumeMounts:
+              - name: registry-data
+                mountPath: /var/lib/registry
+            volumes:
+            - name: registry-data
+              persistentVolumeClaim:
+                claimName: docker-registry-pvc
+
+- name: Wait for cleanup job to complete
+  kubernetes.core.k8s_info:
+    api_version: batch/v1
+    kind: Job
+    name: registry-cleanup-job
+    namespace: "{{ registry_namespace }}"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    wait: true
+    wait_condition:
+      type: Complete
+      status: "True"
+    wait_timeout: 300
+  register: cleanup_job_result
+
+- name: Get cleanup job logs
+  kubernetes.core.k8s_log:
+    api_version: v1
+    kind: Job
+    name: registry-cleanup-job
+    namespace: "{{ registry_namespace }}"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+  register: cleanup_logs
+  ignore_errors: true
+
+- name: Display cleanup job logs
+  ansible.builtin.debug:
+    msg: |
+      Cleanup Job Logs:
+      {{ cleanup_logs.log | default('No logs available') }}
+
+- name: Remove cleanup job
+  kubernetes.core.k8s:
+    state: absent
+    api_version: batch/v1
+    kind: Job
+    name: registry-cleanup-job
+    namespace: "{{ registry_namespace }}"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+
+- name: Restart registry
+  kubernetes.core.k8s_scale:
+    api_version: apps/v1
+    kind: Deployment
+    name: docker-registry
+    namespace: "{{ registry_namespace }}"
+    replicas: 1
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    wait: true
+    wait_timeout: 120
+
+- name: Wait for registry to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ registry_namespace }}"
+    label_selectors:
+      - "app=docker-registry"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+    wait: true
+    wait_condition:
+      type: Ready
+      status: "True"
+    wait_timeout: 180
+
+- name: Verify registry is running
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Service
+    name: docker-registry
+    namespace: "{{ registry_namespace }}"
+    kubeconfig: "{{ rancher_kubeconfig }}"
+  register: registry_service
+
+- name: Test registry connectivity
+  ansible.builtin.uri:
+    url: "http://{{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/v2/"
+    method: GET
+    status_code: 200
+    timeout: 30
+  register: registry_test
+  retries: 5
+  delay: 10
+  ignore_errors: true
+
+- name: Display cleanup completion
+  ansible.builtin.debug:
+    msg: |
+      REGISTRY CLEANUP COMPLETED!
+      
+      Registry Status: {{ 'ONLINE' if registry_test.status == 200 else 'OFFLINE' }}
+      Registry URL: http://{{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}
+      
+      All images have been removed from the registry
+      Registry has been restarted
+      {% if registry_test.status == 200 %}
+      Registry is responding to requests
+      {% else %}
+      Registry may need additional time to start
+      {% endif %}
+      
+      The registry is now clean and ready for new images.
+
+- name: Fail if registry is not responding
+  ansible.builtin.fail:
+    msg: |
+      Registry cleanup completed but registry is not responding.
+      Please check the registry pod status manually:
+      kubectl get pods -n {{ registry_namespace }}
+  when: registry_test.status != 200

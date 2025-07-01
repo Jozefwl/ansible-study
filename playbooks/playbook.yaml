@@ -88,3 +88,10 @@
   roles:
     - role: 12_setup_cdn
       tags: [cdn, never]
+
+- name: Clean registry
+  hosts: "{{ TARGET_NODE }}"
+  become: true
+  roles:
+    - role: 20_clean_registry
+      tags: [clean, never]
