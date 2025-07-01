@@ -8,11 +8,13 @@
     path: "{{ workdir }}/frontend"
   register: frontend_exists
 
-- name: Pull latest FE commit
+- name: Pull latest commit
   ansible.builtin.git:
     repo: "{{ frontend_repo }}"
     dest: "{{ workdir }}/frontend"
-    refspec: '+refs/pull/*:refs/heads/*'
+    version: HEAD
+    force: yes # force update even if there are local changes
+    update: yes # actually pull the latest changes
   when: frontend_exists.stat.exists
 
 - name: Clone the frontend repository

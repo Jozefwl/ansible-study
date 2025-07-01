@@ -15,12 +15,12 @@
 - name: Load Ingress config
   ansible.builtin.include_vars:
     file: nginx-ingress.yaml
-    name: nginx-ingress
+    name: nginx_ingress
 
 # TODO: more roles for switching deployment strategies
 - name: Apply ingress for waldhauser.sk and related sites
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
-    definition: "{{ nginx-ingress }}"
+    definition: "{{ nginx_ingress }}"
   register: nginx_result

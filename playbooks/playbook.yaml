@@ -87,4 +87,4 @@
   become: true
   roles:
     - role: 12_setup_cdn
-      tags: [cdn]
+      tags: [cdn, never]

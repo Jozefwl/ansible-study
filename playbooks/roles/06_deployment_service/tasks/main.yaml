@@ -31,14 +31,14 @@
     name: deployment_config_be
 
 # TODO: more roles for switching deployment strategies
-- name: Make kubernetes frontend deployment
+- name: Apply kubernetes frontend deployment
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
     definition: "{{ deployment_config_fe }}"
   register: deployment_result_fe
 
-- name: Make backend kubernetes deployment
+- name: Apply backend kubernetes deployment
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
@@ -59,25 +59,25 @@
     file: service_be.yaml
     name: service_config_be
 
-- name: Load prometheus service config
+- name: Load NetworkService config
   ansible.builtin.include_vars:
-    file: service_prom.yaml
-    name: service_config_prom
+    file: networkservice_dns.yaml
+    name: networkservice_dns
 
-- name: Make frontend service
+- name: Apply frontend service
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
     definition: "{{ service_config_fe }}"
 
-- name: Make backend service
+- name: Apply backend service
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
     definition: "{{ service_config_be }}"
 
-- name: Make prometheus service
+- name: Apply DNS NetworkPolicy for BE
   kubernetes.core.k8s:
     state: present
     kubeconfig: "{{ rancher_kubeconfig }}"
-    definition: "{{ service_config_prom }}"
+    definition: "{{ networkservice_dns }}"

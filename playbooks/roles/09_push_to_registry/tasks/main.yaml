@@ -11,23 +11,23 @@
 
 - name: Tag frontend image for registry
   ansible.builtin.shell:
-    cmd: "docker tag website-blog:latest {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:latest"
+    cmd: "docker tag website-blog:{{ version_frontend }} {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:{{ version_frontend }}"
   become: true
 
 - name: Tag backend image for registry
   ansible.builtin.shell:
-    cmd: "docker tag metrics-api:latest {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:latest"
+    cmd: "docker tag metrics-api:{{ version_backend }} {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:{{ version_backend }}"
   become: true
 
 - name: Push frontend image to registry
   ansible.builtin.shell:
-    cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:latest"
+    cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/website-blog:{{ version_frontend }}"
   become: true
   register: push_result
 
 - name: Push backend image to registry
   ansible.builtin.shell:
-    cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:latest"
+    cmd: "docker push {{ hostvars[TARGET_NODE]['ansible_host'] }}:{{ nodeport_registry }}/metrics-api:{{ version_backend }}"
   become: true
   register: push_result
 

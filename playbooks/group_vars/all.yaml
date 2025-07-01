@@ -26,6 +26,8 @@ nodeport_registry: 30999
 deployment_stragegy: "blue-green" # rolling, blue-green, canary, shadow, recreate, ramped
 namespace: apps
 namespace_cdn: cdn
+version_frontend: 0.1.1.1
+version_backend: 0.1.1.3
 
 
 
